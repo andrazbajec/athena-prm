@@ -1,0 +1,8 @@
+.env
+data/
+log/
+out/
+.idea/
+node_modules/
+.DS_Store
+config/seniors.json

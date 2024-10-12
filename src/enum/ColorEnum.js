@@ -1,0 +1,11 @@
+const COLOR_DANGER = '#DC3545';
+const COLOR_PRIMARY = '#0D6EFD';
+const COLOR_SUCCESS = '#198754';
+const COLOR_WARNING = '#FFC107';
+
+module.exports = {
+  COLOR_DANGER,
+  COLOR_PRIMARY,
+  COLOR_SUCCESS,
+  COLOR_WARNING,
+};
