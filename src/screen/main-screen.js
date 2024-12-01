@@ -1,8 +1,9 @@
 const { Spinner } = require('../component/Spinner');
 const { refreshWatchingPullRequests } = require('../../puppeteer');
-const { render: renderWatchedPRScreen } = require('./watched-pr-screen');
-const { render: renderMyPRScreen } = require('./my-pr-screen');
-const { render: renderMergeStatusScreen } = require('./merge-status-screen');
+const { Button } = require('../component/Button');
+const { RenderHelper } = require('../helper/RenderHelper');
+const { ScreenEnum } = require('../enum/ScreenEnum');
+
 const renderHeader = ($app) => {
   const $header = document.createElement('div');
   $header.id = 'header';
@@ -11,11 +12,11 @@ const renderHeader = ($app) => {
   const $refreshContainer = document.createElement('div');
   $refreshContainer.id = 'refresh-container';
 
-  const $refreshButton = document.createElement('button');
-  $refreshButton.className = 'btn btn-primary';
-  $refreshButton.id = 'refresh-data';
-  $refreshButton.type = 'button';
-  $refreshButton.textContent = 'Refresh data';
+  const $refreshButton = Button({
+    classes: ['btn', 'btn-primary'],
+    id: 'refresh-data',
+    textContent: 'Refresh data',
+  });
 
   $refreshButton.addEventListener('click', async () => {
     const $spinner = Spinner({ color: 'primary' });
@@ -32,45 +33,49 @@ const renderHeader = ($app) => {
   const $navigation = document.createElement('div');
   $navigation.id = 'navigation';
 
-  const $watchedPullRequestsButton = document.createElement('button');
-  $watchedPullRequestsButton.className = 'btn btn-dark';
-  $watchedPullRequestsButton.id = 'watched-pull-requests';
-  $watchedPullRequestsButton.type = 'button';
-  $watchedPullRequestsButton.textContent = 'Watched pull requests';
+  const $watchedPullRequestsButton = Button({
+    classes: ['btn', 'btn-dark'],
+    id: 'watched-pull-requests',
+    textContent: 'Watched pull requests',
+  });
 
   $watchedPullRequestsButton.addEventListener('click', async () => {
-    await renderWatchedPRScreen();
+    await RenderHelper.render(ScreenEnum.ROUTE_WATCHED_PR);
   });
 
-  const $myPullRequestsButton = document.createElement('button');
-  $myPullRequestsButton.className = 'btn btn-secondary';
-  $myPullRequestsButton.id = 'my-pull-requests';
-  $myPullRequestsButton.type = 'button';
-  $myPullRequestsButton.textContent = 'My pull requests';
+  const $myPullRequestsButton = Button({
+    classes: ['btn', 'btn-secondary'],
+    id: 'my-pull-requests',
+    textContent: 'My pull requests',
+  });
 
   $myPullRequestsButton.addEventListener('click', async () => {
-    await renderMyPRScreen();
+    await RenderHelper.render(ScreenEnum.ROUTE_MY_PR);
   });
 
-  const $mergeStatusButton = document.createElement('button');
-  $mergeStatusButton.className = 'btn btn-secondary';
-  $mergeStatusButton.id = 'merge-status';
-  $mergeStatusButton.type = 'button';
-  $mergeStatusButton.textContent = 'Merge status';
+  const $mergeStatusButton = Button({
+    classes: ['btn', 'btn-secondary'],
+    id: 'merge-status',
+    textContent: 'Merge status',
+  });
 
   $mergeStatusButton.addEventListener('click', async () => {
-    await renderMergeStatusScreen();
+    await RenderHelper.render(ScreenEnum.ROUTE_MERGE_STATUS);
   });
 
-  const $settingsButton = document.createElement('button');
-  $settingsButton.className = 'btn btn-secondary';
-  $settingsButton.type = 'button';
+  const $settingsButton = Button({
+    classes: ['btn', 'btn-secondary'],
+    id: 'settings',
+  });
+
+  $settingsButton.addEventListener('click', async () => {
+    await RenderHelper.render(ScreenEnum.ROUTE_SETTINGS);
+  });
 
   // $settingsButton.addEventListener('click')
 
   const $settingsIcon = document.createElement('i');
   $settingsIcon.className = 'fa-solid fa-gear';
-
 
   $settingsButton.appendChild($settingsIcon);
   $refreshContainer.appendChild($refreshButton);
@@ -98,7 +103,7 @@ const render = async () => {
   renderHeader($app);
   renderContentContainer($app);
 
-  await renderWatchedPRScreen();
+  await RenderHelper.render(ScreenEnum.ROUTE_WATCHED_PR);
 };
 
 module.exports = {

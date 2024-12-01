@@ -1,6 +1,5 @@
-const { readdir, readFile, mkdir } = require("fs/promises");
-
-const myName = "Andraž Bajec";
+const { readdir, readFile, mkdir } = require('fs/promises');
+const { ConfigHelper } = require('./ConfigHelper');
 
 class DataHelper {
   static _data = null;
@@ -10,13 +9,13 @@ class DataHelper {
       return DataHelper._data;
     }
 
-    const folder = "data/pr-watching";
+    const folder = 'data/pr-watching';
     const latestFile = await DataHelper.getLatestFilename();
     let data = [];
 
     if (latestFile) {
       const content = await readFile(`${folder}/${latestFile}`, {
-        encoding: "utf8",
+        encoding: 'utf8',
       });
       data = JSON.parse(content);
     }
@@ -27,7 +26,7 @@ class DataHelper {
   }
 
   static async getLatestFilename() {
-    const folder = "data/pr-watching";
+    const folder = 'data/pr-watching';
 
     try {
       await mkdir(folder, { recursive: true });
@@ -41,12 +40,13 @@ class DataHelper {
 
   static async getFilteredData({ excludeMine = false, excludeOthers = false, showApproved = true, showHidden = true, showNotWatched = true }) {
     const data = await DataHelper.getData();
+    const displayName = await ConfigHelper.getConfig('display-name');
 
     return (
       data.filter(({ author, hidden, reviewers }) => {
         let showCurrent = true;
 
-        if ((excludeMine && author === myName) || (excludeOthers && author !== myName)) {
+        if ((excludeMine && author === displayName) || (excludeOthers && author !== displayName)) {
           return false;
         }
 
@@ -55,11 +55,11 @@ class DataHelper {
         }
 
         if (!showApproved) {
-          showCurrent = !reviewers.filter(({ approved, name }) => approved && myName === name).length;
+          showCurrent = !reviewers.filter(({ approved, name }) => approved && displayName === name).length;
         }
 
         if (showCurrent && !showNotWatched) {
-          showCurrent = reviewers.filter(({ name }) => myName === name).length;
+          showCurrent = reviewers.filter(({ name }) => displayName === name).length;
         }
 
         return showCurrent;

@@ -1,18 +1,25 @@
 /**
+ * @param {Array<string>} classes
  * @param {string|null} color
  * @returns {HTMLDivElement}
  * @constructor
  */
-const Spinner = ({ color = null } = {}) => {
+const Spinner = ({
+  classes = [],
+  color = null,
+} = {}) => {
   const $spinnerBorder = document.createElement('div');
-  const spinnerBorderClasses = ['spinner-border'];
   $spinnerBorder.role = 'status';
 
-  if (color) {
-    spinnerBorderClasses.push(`text-${color}`);
+  if (!classes.includes('spinner-border')) {
+    classes.push('spinner-border');
   }
 
-  $spinnerBorder.className = spinnerBorderClasses.join(' ');
+  if (color) {
+    classes.push(`text-${color}`);
+  }
+
+  $spinnerBorder.className = classes.join(' ');
 
   const $visuallyHidden = document.createElement('span');
   $visuallyHidden.className = 'visually-hidden';

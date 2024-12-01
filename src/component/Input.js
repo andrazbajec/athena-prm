@@ -1,8 +1,10 @@
 const Input = ({
   classes = [],
   id,
+  name,
   placeholder = '',
-  type = "text",
+  readonly = false,
+  type = 'text',
 } = {}) => {
   const $input = document.createElement('input');
   $input.type = type;
@@ -13,7 +15,15 @@ const Input = ({
   }
 
   if (classes.length) {
-    $input.className = classes.join(" ");
+    $input.className = classes.join(' ');
+  }
+
+  if (readonly) {
+    $input.readOnly = true;
+  }
+
+  if (name) {
+    $input.name = name;
   }
 
   return $input;

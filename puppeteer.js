@@ -3,6 +3,7 @@ const puppeteer = require("puppeteer");
 const dayjs = require("dayjs");
 const { log } = require("./logger");
 const seniors = require("./config/seniors.json");
+const { ConfigHelper } = require("./src/helper/ConfigHelper");
 
 // region selectors
 const SELECTOR_LOGIN_DROPDOWN = "#jsToggleNavbarMenu";
@@ -30,9 +31,7 @@ const waitForVisible = async (page, selector, timeout = 30000) => {
   await page.waitForSelector(selector, { visible: false, timeout });
 };
 
-const navigateToPullRequestList = async () => {
-  await log("Opening puppeteer");
-  const browser = await puppeteer.launch({ headless: process.env.HEADLESS === "true" });
+const navigateToPullRequestList = async (browser) => {
   await log("Opening new page in puppeteer");
   const page = (await browser.pages())[0];
   await log("Navigating to Bitbucket");
@@ -46,38 +45,42 @@ const navigateToPullRequestList = async () => {
   await page.click(SELECTOR_LOGIN_BUTTON);
   await log("Navigated to login");
 
+  const { email, password } = await ConfigHelper.getConfig();
+
   await waitForVisible(page, SELECTOR_EMAIL_INPUT);
   await page.focus(SELECTOR_EMAIL_INPUT);
-  await page.keyboard.type(process.env.EMAIL);
+  await page.keyboard.type(email);
   await waitForVisible(page, SELECTOR_LOGIN_SUBMIT);
   await page.click(SELECTOR_LOGIN_SUBMIT);
   await delay(2000);
   await waitForVisible(page, SELECTOR_PASSWORD_INPUT);
   await page.focus(SELECTOR_PASSWORD_INPUT);
-  await page.keyboard.type(process.env.PASSWORD);
+  await page.keyboard.type(password);
   await waitForVisible(page, SELECTOR_LOGIN);
   await page.click(SELECTOR_LOGIN);
 
   await log("Logged in");
 
-  try {
-    await waitForVisible(page, SELECTOR_SHOW_MORE);
-  } catch (_) {
-    await log("Show more selector not found");
-    await log("Dismissing MFA promotion");
-    await waitForVisible(page, SELECTOR_MFA_PROMOTE_DISMISS);
-    await log("MFA promotion dismiss button found");
-    await page.click(SELECTOR_MFA_PROMOTE_DISMISS);
-    await log("MFA promotion dismiss button clicked");
-    await waitForVisible(page, SELECTOR_SHOW_MORE);
-  }
+  // try {
+  //   await waitForVisible(page, SELECTOR_SHOW_MORE, 5000);
+  // } catch (_) {
+  //   await log("Show more selector not found");
+  //   await log("Dismissing MFA promotion");
+  //   await waitForVisible(page, SELECTOR_MFA_PROMOTE_DISMISS);
+  //   await log("MFA promotion dismiss button found");
+  //   await page.click(SELECTOR_MFA_PROMOTE_DISMISS);
+  //   await log("MFA promotion dismiss button clicked");
+  //   await waitForVisible(page, SELECTOR_SHOW_MORE);
+  // }
 
   try {
     await waitForVisible(page, 'span[data-vc="icon-undefined"][aria-label="Dismiss"]', 5000);
     await log("Found popup to dismiss");
     await page.click('span[data-vc="icon-undefined"][aria-label="Dismiss"]');
     await log("Dismissed popup");
-  } catch (_) {}
+  } catch (_) {
+    await log("No dismissable popup found");
+  }
 
   // Could be implemented fully
   // try {
@@ -86,10 +89,29 @@ const navigateToPullRequestList = async () => {
   //   await page.click('div[role="alert"] div:has(> div > h2):has(> button) span[aria-label="Expand"]');
   //   await log("Expanded popup");
   // } catch (_) {}
+  //
 
-  await page.click(SELECTOR_SHOW_MORE);
-  await waitForVisible(page, SELECTOR_VIEW_ALL);
-  await page.click(SELECTOR_VIEW_ALL);
+  await page.waitForNetworkIdle();
+
+  const $meta = await page.$('meta#bb-bootstrap');
+  const displayName = await $meta?.evaluate((element) => JSON.parse(document.getElementById('bb-bootstrap').dataset.currentUser).displayName);
+
+  if (displayName) {
+    await ConfigHelper.setConfig('display-name', displayName);
+  }
+
+  await log("Waiting to find dropdown trigger");
+  await waitForVisible(page, 'button[data-testid="overflow-menu-trigger"]');
+  await log("Dropdown triggered. Waiting to find pull requests button");
+  await page.click('button[data-testid="overflow-menu-trigger"]');
+  await waitForVisible(page, 'button[href*="pull-request"]');
+  await log("Pull request button found, clicking");
+  await page.click('button[href*="pull-request"]');
+  await log("Pull request button was clicked");
+
+  // await page.click(SELECTOR_SHOW_MORE);
+  // await waitForVisible(page, SELECTOR_VIEW_ALL);
+  // await page.click(SELECTOR_VIEW_ALL);
 
   await log("Navigated to pull request list");
 
@@ -198,36 +220,44 @@ const parseUrl = async (browser, url) => {
 
 module.exports = {
   refreshWatchingPullRequests: async () => {
-    const { browser, page } = await navigateToPullRequestList();
-    const numberOfPages = await getNumberOfPages(page);
-    const baseUrl = page.url();
-    const promises = [];
-
-    for (let pageNumber = 1; pageNumber <= numberOfPages; pageNumber++) {
-      const url = `${baseUrl}&page=${pageNumber}`;
-
-      promises.push(parseUrl(browser, url));
-    }
-
-    const values = await Promise.all(promises);
-    const pullRequests = values.flat();
-
-    // const pullRequests = await getPullRequests(page);
-    await log("Pull requests fetched");
-    const folder = "data/pr-watching";
+    await log("Opening puppeteer");
+    const browser = await puppeteer.launch({ headless: process.env.HEADLESS === "true" });
 
     try {
-      await mkdir(folder, { recursive: true });
-    } catch (_) {
-      // Fall through
-    }
+      const { page } = await navigateToPullRequestList(browser);
+      const numberOfPages = await getNumberOfPages(page);
+      const baseUrl = page.url();
+      const promises = [];
 
-    const filePath = `${folder}/${dayjs().format("YYYY_MM_DD-HH_mm_ss")}.json`;
-    await writeFile(filePath, JSON.stringify(pullRequests, null, 4), {
-      encoding: "utf8",
-    });
-    await log(`Pull request data saved to file (${filePath})`);
-    await browser.close();
-    await log("Puppeteer browser closed");
+      for (let pageNumber = 1; pageNumber <= numberOfPages; pageNumber++) {
+        const url = `${baseUrl}&page=${pageNumber}`;
+
+        promises.push(parseUrl(browser, url));
+      }
+
+      const values = await Promise.all(promises);
+      const pullRequests = values.flat();
+
+      // const pullRequests = await getPullRequests(page);
+      await log("Pull requests fetched");
+      const folder = "data/pr-watching";
+
+      try {
+        await mkdir(folder, { recursive: true });
+      } catch (_) {
+        // Fall through
+      }
+
+      const filePath = `${folder}/${dayjs().format("YYYY_MM_DD-HH_mm_ss")}.json`;
+      await writeFile(filePath, JSON.stringify(pullRequests, null, 4), {
+        encoding: "utf8",
+      });
+      await log(`Pull request data saved to file (${filePath})`);
+      await browser.close();
+      await log("Puppeteer browser closed");
+    } catch (error) {
+      await log(`${error.message} (${error.stack})`);
+      await browser.close();
+    }
   },
 };

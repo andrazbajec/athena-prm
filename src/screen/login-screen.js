@@ -1,23 +1,35 @@
 const { Input } = require('../component/Input');
 const { ConfigHelper } = require('../helper/ConfigHelper');
-const { render: renderMainScreen } = require('../screen/main-screen');
+const { RenderHelper } = require('../helper/RenderHelper');
+const { ScreenEnum } = require('../enum/ScreenEnum');
+const { Button } = require('../component/Button');
 
-const render = () => {
+const render = async () => {
   const $app = document.getElementById('app');
 
   const $container = document.createElement('div');
   $container.id = 'login-container';
 
-  const $emailInput = Input({ placeholder: 'email', type: 'email' });
-  const $passwordInput = Input({ placeholder: 'password', type: 'password' });
+  const $emailInput = Input({
+    classes: ['form-control', 'w-25'],
+    placeholder: 'email',
+    type: 'email',
+  });
+  const $passwordInput = Input({
+    classes: ['form-control', 'w-25'],
+    placeholder: 'password',
+    type: 'password',
+  });
 
-  const $continueButton = document.createElement('button');
-  $continueButton.className = 'btn btn-success btn-sm';
-  $continueButton.textContent = 'continue';
+  const $continueButton = Button({
+    classes: ['btn', 'btn-success', 'btn-sm', 'w-25'],
+    textContent: 'continue',
+  });
 
   $continueButton.onclick = async () => {
-    await ConfigHelper.saveConfig({ email: $emailInput.value, password: $passwordInput.value });
-    await renderMainScreen();
+    await ConfigHelper.setConfig('email', $emailInput.value);
+    await ConfigHelper.setConfig('password', $passwordInput.value);
+    await RenderHelper.render(ScreenEnum.ROUTE_MAIN_SCREEN);
   };
 
   $app.innerHTML = '';
