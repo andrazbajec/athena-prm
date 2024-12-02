@@ -1,12 +1,12 @@
-const { mkdir, writeFile } = require("fs/promises");
-const puppeteer = require("puppeteer");
-const dayjs = require("dayjs");
-const { log } = require("./logger");
-const seniors = require("./config/seniors.json");
-const { ConfigHelper } = require("./src/helper/ConfigHelper");
+const { mkdir, writeFile } = require('fs/promises');
+const puppeteer = require('puppeteer');
+const dayjs = require('dayjs');
+const { log } = require('./logger');
+const seniors = require('./config/seniors.json');
+const { ConfigHelper } = require('./src/helper/ConfigHelper');
 
 // region selectors
-const SELECTOR_LOGIN_DROPDOWN = "#jsToggleNavbarMenu";
+const SELECTOR_LOGIN_DROPDOWN = '#jsToggleNavbarMenu';
 const SELECTOR_LOGIN_BUTTON = 'a[data-label-english="Log in"].imkt-navbar__collapsed-link-list-link';
 const SELECTOR_EMAIL_INPUT = 'input[data-testid="username"]';
 const SELECTOR_LOGIN_SUBMIT = 'button[id="login-submit"]';
@@ -32,10 +32,10 @@ const waitForVisible = async (page, selector, timeout = 30000) => {
 };
 
 const navigateToPullRequestList = async (browser) => {
-  await log("Opening new page in puppeteer");
+  await log('Opening new page in puppeteer');
   const page = (await browser.pages())[0];
-  await log("Navigating to Bitbucket");
-  await page.goto("https://bitbucket.org/");
+  await log('Navigating to Bitbucket');
+  await page.goto('https://bitbucket.org/');
 
   await waitForVisible(page, SELECTOR_LOGIN_DROPDOWN);
   await page.click(SELECTOR_LOGIN_DROPDOWN);
@@ -43,7 +43,7 @@ const navigateToPullRequestList = async (browser) => {
   await waitForVisible(page, SELECTOR_LOGIN_BUTTON);
   await delay();
   await page.click(SELECTOR_LOGIN_BUTTON);
-  await log("Navigated to login");
+  await log('Navigated to login');
 
   const { email, password } = await ConfigHelper.getConfig();
 
@@ -59,7 +59,7 @@ const navigateToPullRequestList = async (browser) => {
   await waitForVisible(page, SELECTOR_LOGIN);
   await page.click(SELECTOR_LOGIN);
 
-  await log("Logged in");
+  await log('Logged in');
 
   // try {
   //   await waitForVisible(page, SELECTOR_SHOW_MORE, 5000);
@@ -75,11 +75,11 @@ const navigateToPullRequestList = async (browser) => {
 
   try {
     await waitForVisible(page, 'span[data-vc="icon-undefined"][aria-label="Dismiss"]', 5000);
-    await log("Found popup to dismiss");
+    await log('Found popup to dismiss');
     await page.click('span[data-vc="icon-undefined"][aria-label="Dismiss"]');
-    await log("Dismissed popup");
+    await log('Dismissed popup');
   } catch (_) {
-    await log("No dismissable popup found");
+    await log('No dismissible popup found');
   }
 
   // Could be implemented fully
@@ -94,26 +94,28 @@ const navigateToPullRequestList = async (browser) => {
   await page.waitForNetworkIdle();
 
   const $meta = await page.$('meta#bb-bootstrap');
-  const displayName = await $meta?.evaluate((element) => JSON.parse(document.getElementById('bb-bootstrap').dataset.currentUser).displayName);
+  const displayName = await $meta?.evaluate((element) => JSON.parse(element.dataset.currentUser).displayName);
 
   if (displayName) {
     await ConfigHelper.setConfig('display-name', displayName);
   }
 
-  await log("Waiting to find dropdown trigger");
+  await page.waitForNetworkIdle({ idleTime: 3000 });
+
+  await log('Waiting to find dropdown trigger');
   await waitForVisible(page, 'button[data-testid="overflow-menu-trigger"]');
-  await log("Dropdown triggered. Waiting to find pull requests button");
+  await log('Dropdown triggered. Waiting to find pull requests button');
   await page.click('button[data-testid="overflow-menu-trigger"]');
   await waitForVisible(page, 'button[href*="pull-request"]');
-  await log("Pull request button found, clicking");
+  await log('Pull request button found, clicking');
   await page.click('button[href*="pull-request"]');
-  await log("Pull request button was clicked");
+  await log('Pull request button was clicked');
 
   // await page.click(SELECTOR_SHOW_MORE);
   // await waitForVisible(page, SELECTOR_VIEW_ALL);
   // await page.click(SELECTOR_VIEW_ALL);
 
-  await log("Navigated to pull request list");
+  await log('Navigated to pull request list');
 
   await waitForVisible(page, SELECTOR_SELECT_PR_USER_FILTER);
   await page.click(SELECTOR_SELECT_PR_USER_FILTER);
@@ -125,31 +127,31 @@ const navigateToPullRequestList = async (browser) => {
 };
 
 const getPullRequests = async (page, pullRequests = []) => {
-  await log("Fetching pull requests");
+  await log('Fetching pull requests');
   await waitForVisible(page, SELECTOR_PR_ROW);
 
   for (const $row of await page.$$(SELECTOR_PR_ROW)) {
     const $profileCardTrigger = await $row.$(SELECTOR_PROFILE_CARD_TRIGGER);
     const $prLink = await $row.$(SELECTOR_PR_LINK);
     const $branch = await $row.$(SELECTOR_BRANCH);
-    const $created = await $row.$("td:nth-child(2) > span");
+    const $created = await $row.$('td:nth-child(2) > span');
     const created = await $created?.evaluate((element) => element.textContent?.trim());
 
     const author = await $profileCardTrigger.evaluate((element) => element.textContent);
     const branch = await $branch.evaluate((element) => element.textContent);
-    const link = await $prLink.evaluate((element) => element.getAttribute("href"));
+    const link = await $prLink.evaluate((element) => element.getAttribute('href'));
     const reviewers = [];
-    const repository = link.replace(/\/[^/]*\//, "").match(/[^/]*/)[0] ?? null;
+    const repository = link.replace(/\/[^/]*\//, '').match(/[^/]*/)[0] ?? null;
     let approves = 0;
     let requestingChanges = 0;
     let seniorApproves = 0;
 
     for (const $avatar of await $row.$$(SELECTOR_AVATAR_GROUP)) {
       const textContent = await $avatar.evaluate((element) => element.textContent);
-      const approved = textContent.includes("(approved)");
+      const approved = textContent.includes('(approved)');
       const name = textContent.split(/ approved| requested/)[0];
       const isSenior = seniors.includes(name);
-      const requestChanges = textContent.includes("requested changes");
+      const requestChanges = textContent.includes('requested changes');
 
       if (approved) {
         approves++;
@@ -220,8 +222,8 @@ const parseUrl = async (browser, url) => {
 
 module.exports = {
   refreshWatchingPullRequests: async () => {
-    await log("Opening puppeteer");
-    const browser = await puppeteer.launch({ headless: process.env.HEADLESS === "true" });
+    await log('Opening puppeteer');
+    const browser = await puppeteer.launch({ headless: process.env.HEADLESS === 'true' });
 
     try {
       const { page } = await navigateToPullRequestList(browser);
@@ -239,8 +241,8 @@ module.exports = {
       const pullRequests = values.flat();
 
       // const pullRequests = await getPullRequests(page);
-      await log("Pull requests fetched");
-      const folder = "data/pr-watching";
+      await log('Pull requests fetched');
+      const folder = 'data/pr-watching';
 
       try {
         await mkdir(folder, { recursive: true });
@@ -248,13 +250,13 @@ module.exports = {
         // Fall through
       }
 
-      const filePath = `${folder}/${dayjs().format("YYYY_MM_DD-HH_mm_ss")}.json`;
+      const filePath = `${folder}/${dayjs().format('YYYY_MM_DD-HH_mm_ss')}.json`;
       await writeFile(filePath, JSON.stringify(pullRequests, null, 4), {
-        encoding: "utf8",
+        encoding: 'utf8',
       });
       await log(`Pull request data saved to file (${filePath})`);
       await browser.close();
-      await log("Puppeteer browser closed");
+      await log('Puppeteer browser closed');
     } catch (error) {
       await log(`${error.message} (${error.stack})`);
       await browser.close();
