@@ -1,6 +1,7 @@
 const { ScreenEnum } = require('../enum/ScreenEnum');
 
 const routeMapping = {
+  [ScreenEnum.ROUTE_LEADERBOARD]: '../screen/leaderboard-screen',
   [ScreenEnum.ROUTE_LOGIN]: '../screen/login-screen',
   [ScreenEnum.ROUTE_WATCHED_PR]: '../screen/watched-pr-screen',
   [ScreenEnum.ROUTE_MAIN_SCREEN]: '../screen/main-screen',

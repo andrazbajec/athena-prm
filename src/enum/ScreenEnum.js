@@ -1,4 +1,5 @@
 const ScreenEnum = {
+  ROUTE_LEADERBOARD: 'Leaderboard',
   ROUTE_LOGIN: 'Login',
   ROUTE_WATCHED_PR: 'WatchedPR',
   ROUTE_MAIN_SCREEN: 'MainScreen',

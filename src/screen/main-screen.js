@@ -63,6 +63,16 @@ const renderHeader = ($app) => {
     await RenderHelper.render(ScreenEnum.ROUTE_MERGE_STATUS);
   });
 
+  const $leaderboardButton = Button({
+    classes: ['btn', 'btn-secondary'],
+    id: 'leaderboard',
+    textContent: 'Leaderboard',
+  });
+
+  $leaderboardButton.addEventListener('click', async () => {
+    await RenderHelper.render(ScreenEnum.ROUTE_LEADERBOARD);
+  });
+
   const $settingsButton = Button({
     classes: ['btn', 'btn-secondary'],
     id: 'settings',
@@ -82,6 +92,7 @@ const renderHeader = ($app) => {
   $navigation.appendChild($watchedPullRequestsButton);
   $navigation.appendChild($myPullRequestsButton);
   $navigation.appendChild($mergeStatusButton);
+  $navigation.appendChild($leaderboardButton);
   $navigation.appendChild($settingsButton);
   $header.appendChild($refreshContainer);
   $header.appendChild($navigation);
