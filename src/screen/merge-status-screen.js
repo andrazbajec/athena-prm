@@ -57,35 +57,34 @@ const render = async () => {
     text: 'hide approved',
   });
 
-  $filterBranchInput.oninput = () => {
-    _renderTable($tableContainer, {
-      filterAuthor: $filterAuthorInput.value,
-      filterBranch: $filterBranchInput.value,
-      baseFilter: {
-        showApproved: !$hideApprovedCheckbox.checked,
-      },
-    });
-  };
+  const $hideMineCheckbox = Input({
+    classes: ['form-check-input', 'mt-0'],
+    id: 'hide-mine',
+    type: INPUT_TYPE_CHECKBOX,
+  });
 
-  $filterAuthorInput.oninput = ({ target: { value } }) => {
-    _renderTable($tableContainer, {
-      filterAuthor: $filterAuthorInput.value,
-      filterBranch: $filterBranchInput.value,
-      baseFilter: {
-        showApproved: !$hideApprovedCheckbox.checked,
-      },
-    });
-  };
+  const $hideMineLabel = Label({
+    classes: ['form-check-label', 'c-pointer'],
+    for: 'hide-mine',
+    text: 'hide mine',
+  });
 
-  $hideApprovedCheckbox.onchange = ({ target: { value } }) => {
-    _renderTable($tableContainer, {
-      filterAuthor: $filterAuthorInput.value,
-      filterBranch: $filterBranchInput.value,
-      baseFilter: {
-        showApproved: !$hideApprovedCheckbox.checked,
-      },
-    });
-  };
+  const _renderTableCallback = () => _renderTable($tableContainer, {
+    filterAuthor: $filterAuthorInput.value,
+    filterBranch: $filterBranchInput.value,
+    baseFilter: {
+      showApproved: !$hideApprovedCheckbox.checked,
+      excludeMine: $hideMineCheckbox.checked,
+    },
+  });
+
+  $filterBranchInput.oninput = _renderTableCallback;
+
+  $filterAuthorInput.oninput = _renderTableCallback;
+
+  $hideApprovedCheckbox.onchange = _renderTableCallback;
+
+  $hideMineCheckbox.onchange = _renderTableCallback;
 
   const $lastUpdate = document.createElement('p');
   const formattedDate = await getLastUpdateTime();
@@ -103,6 +102,8 @@ const render = async () => {
   $appHeaderLeft.appendChild($filterAuthorInput);
   $appHeaderLeft.appendChild($hideApprovedCheckbox);
   $appHeaderLeft.appendChild($hideApprovedLabel);
+  $appHeaderLeft.appendChild($hideMineCheckbox);
+  $appHeaderLeft.appendChild($hideMineLabel);
   $appHeaderRight.appendChild($lastUpdate);
 
   $appHeader.appendChild($appHeaderLeft);

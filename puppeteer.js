@@ -61,17 +61,20 @@ const navigateToPullRequestList = async (browser) => {
 
   await log('Logged in');
 
-  // try {
-  //   await waitForVisible(page, SELECTOR_SHOW_MORE, 5000);
-  // } catch (_) {
-  //   await log("Show more selector not found");
-  //   await log("Dismissing MFA promotion");
-  //   await waitForVisible(page, SELECTOR_MFA_PROMOTE_DISMISS);
-  //   await log("MFA promotion dismiss button found");
-  //   await page.click(SELECTOR_MFA_PROMOTE_DISMISS);
-  //   await log("MFA promotion dismiss button clicked");
-  //   await waitForVisible(page, SELECTOR_SHOW_MORE);
-  // }
+  // Dismiss 2fa
+  try {
+    await log("Waiting for show more selector to be visible");
+    await page.waitForNetworkIdle();
+    await waitForVisible(page, SELECTOR_SHOW_MORE, 5000);
+  } catch (_) {
+    await log("Show more selector not found");
+    await log("Dismissing MFA promotion");
+    await waitForVisible(page, SELECTOR_MFA_PROMOTE_DISMISS);
+    await log("MFA promotion dismiss button found");
+    await page.click(SELECTOR_MFA_PROMOTE_DISMISS);
+    await log("MFA promotion dismiss button clicked");
+    await waitForVisible(page, SELECTOR_SHOW_MORE);
+  }
 
   try {
     await waitForVisible(page, 'span[data-vc="icon-undefined"][aria-label="Dismiss"]', 5000);
